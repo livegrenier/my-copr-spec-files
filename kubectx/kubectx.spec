@@ -1,5 +1,5 @@
 Name:           kubectx
-Version:        0.9.4
+Version:        0.9.5
 Release:        1%{?dist}
 Summary:        The Kubernetes context manager
 

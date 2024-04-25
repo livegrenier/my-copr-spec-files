@@ -1,65 +1,107 @@
-%global _vpath_srcdir ..
+%bcond_without check
 
-Name:		libayatana-appindicator
-Version:	0.5.90
-Release:	1%{?dist}
-Summary:	Ayatana Application Indicators library
+# No GTK 2 in RHEL 10
+%if 0%{?rhel} > 9
+%bcond_with    gtk2
+%else
+%bcond_without gtk2
+%endif
 
-License:	GPLv3
-URL:		https://ayatanaindicators.github.io/
-Source0:	https://github.com/AyatanaIndicators/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
-Patch0:         0001-install-targets.patch
+%global         nsversion 0.4
+
+Name:           libayatana-indicator
+Version:        0.9.4
+Release:        %autorelease
+Summary:        Ayatana Indicators Shared Library
+
+License:        GPL-3.0-only
+URL:            https://github.com/AyatanaIndicators/%{name}
+Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  gcc
-BuildRequires:	cmake
-BuildRequires:  make
-BuildRequires:	gtk-doc
+BuildRequires:  cmake
+BuildRequires:  gtk-doc
 
-BuildRequires:	gtk2-devel
-BuildRequires:	gtk3-devel
-BuildRequires:  libayatana-indicator-devel
-BuildRequires:  libayatana-indicator-gtk3-devel
-BuildRequires:  libdbusmenu-gtk2-devel
-BuildRequires:  libdbusmenu-gtk3-devel
-BuildRequires:  gobject-introspection-devel
+%if %{with gtk2}
+BuildRequires:  pkgconfig(gtk+-2.0)
+%endif
+
+BuildRequires:  pkgconfig(gtk+-3.0)
+BuildRequires:  pkgconfig(libayatana-ido3-0.4)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(gobject-introspection-1.0)
 BuildRequires:  vala
 
+%if %{with check}
+BuildRequires:  dbus-test-runner
+BuildRequires:  pkgconfig(gtest)
+BuildRequires:  xorg-x11-server-Xvfb
+%endif
 
-%description
-A library to allow applications to export a menu into the an Application
-Indicators aware menu bar. Based on KSNI it also works in KDE and will
-fallback to generic Systray support if none of those are available.
+%global _description %{expand:
+The Ayatana Indicators library contains information to build indicators
+to go into modern desktops indicator applets.}
 
-
-%package devel
-Summary:	Development files for %{name}
-Requires:	%{name}%{?_isa} = %{version}-%{release}
-Provides:       libappindicator-devel = 1:%{version}-%{release}
-Obsoletes:      libappindicator-devel < 1:%{version}-%{release}
-
-%description devel
-The %{name}-devel package contains libraries and header files for
-developing applications that use %{name}.
+%description %_description
 
 
-%package gtk3
-Summary:	GTK+3 build of %{name}
+%if %{with gtk2}
+%package        gtk2
+Summary:        %{summary} for GTK2
+# Force replacement of packages of copr:copr.fedorainfracloud.org:sergiomb:libayatana-appindicator repo
+Provides:       libayatana-indicator2 = %{version}-%{release}
+Obsoletes:      libayatana-indicator2 < 0.9.4
 
-%description gtk3
-A set of symbols and convenience functions that all Ayatana indicators
-are likely to use. This is the GTK+ 3 build of %{name}, for use
-by GTK+ 3 apps.
+%description    gtk2 %_description
+
+This version is built against GTK2.
+%endif
 
 
-%package gtk3-devel
-Summary:	Development files for %{name}-gtk3
-Requires:	%{name}-gtk3%{?_isa} = %{version}-%{release}
-Provides:       libappindicator-gtk3-devel = 1:%{version}-%{release}
-Obsoletes:      libappindicator-gtk3-devel < 1:%{version}-%{release}
+%package        gtk3
+Summary:        %{summary} for GTK3
+# Force replacement of packages of copr:copr.fedorainfracloud.org:sergiomb:libayatana-appindicator repo
+Provides:       libayatana-indicator3 = %{version}-%{release}
+Obsoletes:      libayatana-indicator3 < 0.9.4
+
+%description    gtk3 %_description
+
+This version is built against GTK3.
+
+
+%if %{with gtk2}
+%package        gtk2-devel
+Summary:        Development files for %{name}-gtk2
+Requires:       %{name}-gtk2%{?_isa} = %{version}-%{release}
+# Force replacement of packages of copr:copr.fedorainfracloud.org:sergiomb:libayatana-appindicator repo
+Provides:       libayatana-indicator2-devel = %{version}-%{release}
+Obsoletes:      libayatana-indicator2-devel < 0.9.4
+
+%description    gtk2-devel
+The %{name}-gtk2-devel package contains libraries and header files for
+developing applications that use %{name}-gtk2.
+%endif
+
+
+%package        gtk3-devel
+Summary:        Development files for %{name}-gtk3
+Requires:       %{name}-gtk3%{?_isa} = %{version}-%{release}
+# Force replacement of packages of copr:copr.fedorainfracloud.org:sergiomb:libayatana-appindicator repo
+Provides:       libayatana-indicator3-devel = %{version}-%{release}
+Obsoletes:      libayatana-indicator3-devel < 0.9.4
 
 %description gtk3-devel
 The %{name}-gtk3-devel package contains libraries and header files for
 developing applications that use %{name}-gtk3.
+
+
+%package tools-gtk3
+Summary:    Development tools for %{name}
+Requires:   %{name}-gtk3%{?_isa} = %{version}-%{release}
+
+%description tools-gtk3 %_description
+
+This package contains GTK3 developer tools.
 
 
 %prep
@@ -67,70 +109,88 @@ developing applications that use %{name}-gtk3.
 
 
 %build
-rm -rf build-gtk2 build-gtk3
-mkdir build-gtk2 build-gtk3
-
-pushd build-gtk2
-%cmake -DFLAVOUR_GTK2=ON -DENABLE_GTKDOC=ON -DENABLE_BINDINGS_MONO=OFF
+%define _vpath_builddir build-gtk3
+%cmake \
+%if %{with check}
+    -DENABLE_TESTS=ON
+%endif
 %cmake_build
-popd
 
-pushd build-gtk3
-%cmake -DFLAVOUR_GTK3=ON -DENABLE_GTKDOC=ON -DENABLE_BINDINGS_MONO=OFF
+%if %{with gtk2}
+%define _vpath_builddir build-gtk2
+%cmake -DFLAVOUR_GTK2=ON \
+%if %{with check}
+    -DENABLE_TESTS=ON
+%endif
 %cmake_build
-popd
+%endif
 
 
 %install
-pushd build-gtk2
+%define _vpath_builddir build-gtk3
 %cmake_install
-popd
 
-pushd build-gtk3
+%if %{with gtk2}
+%define _vpath_builddir build-gtk2
 %cmake_install
-popd
+%endif
 
-ln -s libayatana-appindicator %{buildroot}%{_includedir}/libayatana-appindicator-0.1/libappindicator
-ln -s libayatana-appindicator %{buildroot}%{_includedir}/libayatana-appindicator3-0.1/libappindicator
-ln -s ayatana-appindicator-0.1.pc %{buildroot}%{_libdir}/pkgconfig/appindicator-0.1.pc
-ln -s ayatana-appindicator3-0.1.pc %{buildroot}%{_libdir}/pkgconfig/appindicator3-0.1.pc
 
-%files
-%doc AUTHORS COPYING NEWS ChangeLog
-%{_libdir}/libayatana-appindicator.so.1*
-%dir %{_libdir}/girepository-1.0
-%{_libdir}/girepository-1.0/AyatanaAppIndicator-0.1.typelib
+%if %{with check}
+%check
+# Tests fail randomly when running in parallel
 
-%files devel
-%{_includedir}/libayatana-appindicator-0.1/
-%{_libdir}/libayatana-appindicator.so
-%{_libdir}/pkgconfig/ayatana-appindicator-0.1.pc
-%{_libdir}/pkgconfig/appindicator-0.1.pc
-%dir %{_datadir}/gir-1.0
-%{_datadir}/gir-1.0/AyatanaAppIndicator-0.1.gir
-%dir %{_datadir}/gtk-doc
-%dir %{_datadir}/gtk-doc/html
-%{_datadir}/gtk-doc/html/%{name}
+pushd build-gtk3 >/dev/null
+xvfb-run -a %__ctest --output-on-failure --force-new-ctest-process
+popd >/dev/null
+
+%if %{with gtk2}
+pushd build-gtk2 >/dev/null
+xvfb-run -a %__ctest --output-on-failure --force-new-ctest-process
+popd >/dev/null
+%endif
+%endif
+
+
+%if %{with gtk2}
+%files gtk2
+%license AUTHORS COPYING
+%doc README.md
+%{_libdir}/%{name}.so.7
+%{_libdir}/%{name}.so.7.0.0
+%endif
+
 
 %files gtk3
-%doc AUTHORS COPYING NEWS ChangeLog
-%{_libdir}/libayatana-appindicator3.so.1*
-%dir %{_libdir}/girepository-1.0
-%{_libdir}/girepository-1.0/AyatanaAppIndicator3-0.1.typelib
+%license AUTHORS COPYING
+%doc README.md
+%{_libdir}/%{name}3.so.7
+%{_libdir}/%{name}3.so.7.0.0
+
+
+%if %{with gtk2}
+%files gtk2-devel
+%dir %{_includedir}/%{name}-%{nsversion}/
+%dir %{_includedir}/%{name}-%{nsversion}/%{name}/
+%{_includedir}/%{name}-%{nsversion}/%{name}/*.h
+%{_libdir}/%{name}.so
+%{_libdir}/pkgconfig/ayatana-indicator-%{nsversion}.pc
+%endif
+
 
 %files gtk3-devel
-%{_includedir}/libayatana-appindicator3-0.1/
-%{_libdir}/libayatana-appindicator3.so
-%{_libdir}/pkgconfig/ayatana-appindicator3-0.1.pc
-%{_libdir}/pkgconfig/appindicator3-0.1.pc
-%dir %{_datadir}/gir-1.0
-%{_datadir}/gir-1.0/AyatanaAppIndicator3-0.1.gir
-%dir %{_datadir}/gtk-doc
-%dir %{_datadir}/gtk-doc/html
-%{_datadir}/gtk-doc/html/%{name}3
-%dir %{_datadir}/vala
-%dir %{_datadir}/vala/vapi
-%{_datadir}/vala/vapi/ayatana-appindicator3-0.1.*
+%dir %{_includedir}/%{name}3-%{nsversion}/
+%dir %{_includedir}/%{name}3-%{nsversion}/%{name}/
+%{_includedir}/%{name}3-%{nsversion}/%{name}/*.h
+%{_libdir}/%{name}3.so
+%{_libdir}/pkgconfig/ayatana-indicator3-%{nsversion}.pc
 
+
+%files tools-gtk3
+%dir %{_datadir}/%{name}/
+%{_datadir}/%{name}/80indicator-debugging
+%dir %{_libexecdir}/libayatana-indicator
+%{_libexecdir}/libayatana-indicator/ayatana-indicator-loader3
 
 %changelog
+%autochangelog
