@@ -138,15 +138,13 @@ This package contains GTK3 developer tools.
 
 %if %{with check}
 %check
-# Tests fail randomly when running in parallel
-
 pushd build-gtk3 >/dev/null
-xvfb-run -a %__ctest --output-on-failure --force-new-ctest-process
+xvfb-run -a %__ctest --output-on-failure --force-new-ctest-process %{?_smp_mflags}
 popd >/dev/null
 
 %if %{with gtk2}
 pushd build-gtk2 >/dev/null
-xvfb-run -a %__ctest --output-on-failure --force-new-ctest-process
+xvfb-run -a %__ctest --output-on-failure --force-new-ctest-process %{?_smp_mflags}
 popd >/dev/null
 %endif
 %endif
