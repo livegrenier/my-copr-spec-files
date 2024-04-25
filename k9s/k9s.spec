@@ -1,11 +1,10 @@
 Name:           k9s
 Version:        0.32.4
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        Kubernetes CLI To Manage Your Clusters In Style!
 License:        Apache-2.0
 URL:            https://k9scli.io/
-Source0:        https://github.com/derailed/k9s/archive/v%{version}.tar.gz
-#Source0:        https://github.com/derailed/k9s/archive/master.tar.gz
+Source0:        https://github.com/derailed/k9s/archive/refs/tags/v%{version}.tar.gz
 BuildRequires:  make, git, go, wget, bsdtar, binutils, libX11-devel, jq
 
 %if 0%{?suse_version:1}
@@ -22,14 +21,20 @@ K9s provides a terminal UI to interact with your Kubernetes clusters. The aim of
 %prep
 %autosetup -n %{name}-%{version}
 
-# make sure we're using the developer required version
-# useful when building in system that have an older go version
-REQUIRED_GO_VERSION=$(grep -oP '^go \K(0|[1-9]\d*\.(0|[1-9]\d*))$' go.mod)
+# Extract required Go version (major.minor)
+REQUIRED_GO_VERSION=$(grep -oP '^go \K\d+\.\d+' go.mod)
 echo "Target go version: $REQUIRED_GO_VERSION - %{_arch}"
 
+# Fetch the latest patch version for the required Go version
+PATCH_GO_VERSION=$(curl "https://go.dev/dl/?mode=json" | \
+    jq -r "[.[] | select(.version | startswith(\"go$REQUIRED_GO_VERSION.\")) | .version] | max_by(split(\".\")[1:2] | map(tonumber) | add)")
+echo "Using Go version $PATCH_GO_VERSION"
 
-PATCH_GO_VERSION=$(curl "https://go.dev/dl/?mode=json" | jq -r ".[] | select(.version | startswith(\"go${REQUIRED_GO_VERSION}\")) | .version")
-echo "Ensuring minimal go version $PATCH_GO_VERSION"
+# Proceed only if PATCH_GO_VERSION is not empty
+if [ -z "$PATCH_GO_VERSION" ]; then
+    echo "Error: No matching Go version found for $REQUIRED_GO_VERSION"
+    exit 1
+fi
 
 # %{ix86}
 %ifarch i386 i486 i586 i686 pentium3 pentium4 athlon geode
@@ -59,7 +64,7 @@ tar xzf $PATCH_GO_VERSION.linux-${ARCH}.tar.gz
 %build
 export PATH=$PWD/go/bin:$PATH
 go version
-make build
+make %{?_smp_mflags} build
 
 %install
 install -D -m 0755 %{_builddir}/%{name}-%{version}/execs/%{name} "%{buildroot}/%{_bindir}/%{name}"
