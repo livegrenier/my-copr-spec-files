@@ -1,0 +1,73 @@
+Description: Fixes the compatibility with Java 11
+Author: Emmanuel Bourg <ebourg@apache.org>
+Forwarded: no
+--- a/netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java
++++ b/netx/net/sourceforge/jnlp/runtime/JNLPSecurityManager.java
+@@ -339,33 +339,6 @@
+     }
+ 
+     /**
+-     * Checks whether the window can be displayed without an applet
+-     * warning banner, and adds the window to the list of windows to
+-     * be disposed when the calling application exits.
+-     */
+-    @Override
+-    public boolean checkTopLevelWindow(Object window) {
+-        ApplicationInstance app = getApplication();
+-
+-        // remember window -> application mapping for focus, close on exit
+-        if (app != null && window instanceof Window) {
+-            Window w = (Window) window;
+-
+-            OutputController.getLogger().log(OutputController.Level.ERROR_DEBUG, "SM: app: " + app.getTitle() + " is adding a window: " + window + " with appContext " + AppContext.getAppContext());
+-
+-            weakWindows.add(w); // for mapping window -> app
+-            weakApplications.add(app);
+-
+-            app.addWindow(w);
+-        }
+-
+-        // todo: set awt.appletWarning to custom message
+-        // todo: logo on with glass pane on JFrame/JWindow?
+-
+-        return super.checkTopLevelWindow(window);
+-    }
+-
+-    /**
+      * Checks whether the caller can exit the system. This method
+      * identifies whether the caller is a real call to Runtime.exec
+      * and has special behavior when returning from this method
+@@ -421,33 +394,4 @@
+     protected void disableExit() {
+         exitAllowed = false;
+     }
+-
+-    /**
+-     * Tests if a client can get access to the AWT event queue. This version allows
+-     * complete access to the EventQueue for its own AppContext-specific EventQueue.
+-     *
+-     * FIXME there are probably huge security implications for this. Eg:
+-     * http://hg.openjdk.java.net/jdk7/awt/jdk/rev/8022709a306d
+-     *
+-     * @exception  SecurityException  if the caller does not have
+-     *             permission to accesss the AWT event queue.
+-     */
+-    @Override
+-    public void checkAwtEventQueueAccess() {
+-        /*
+-         * this is the templace of the code that should allow applets access to
+-         * eventqueues
+-         */
+-
+-        // AppContext appContext = AppContext.getAppContext();
+-        // ApplicationInstance instance = getApplication();
+-
+-        // if ((appContext == mainAppContext) && (instance != null)) {
+-        // If we're about to allow access to the main EventQueue,
+-        // and anything untrusted is on the class context stack,
+-        // disallow access.
+-        super.checkAwtEventQueueAccess();
+-        // }
+-    }
+-
+ }

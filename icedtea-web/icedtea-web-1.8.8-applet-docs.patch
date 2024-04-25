@@ -1,0 +1,43 @@
+--- IcedTea-Web-icedtea-web-1.8.8-test/netx/net/sourceforge/jnlp/util/docprovider/TextsProvider.java	2021-10-27 22:13:18.000000000 +0200
++++ IcedTea-Web-icedtea-web-1.8.8-test/netx/net/sourceforge/jnlp/util/docprovider/TextsProvider.java.applet	2022-07-08 01:59:47.651407088 +0200
+@@ -502,8 +502,7 @@
+         ItwebSettingsTextsProvider itws = new ItwebSettingsTextsProvider(encoding, new HtmlFormatter(allowContext, allowLogo, includeXmlHeader), titles, expand);
+         PolicyEditorTextsProvider pe = new PolicyEditorTextsProvider(encoding, new HtmlFormatter(allowContext, allowLogo, includeXmlHeader), titles, expand);
+         IcedTeaWebTextsProvider itw = new IcedTeaWebTextsProvider(encoding, new HtmlFormatter(allowContext, allowLogo, includeXmlHeader), titles, expand);
+-        ItwebPluginTextProvider pl = new ItwebPluginTextProvider(encoding, new HtmlFormatter(allowContext, allowLogo, includeXmlHeader), titles, expand);
+-        TextsProvider[] providers = new TextsProvider[]{javaws, itws, pe, itw, pl};
++        TextsProvider[] providers = new TextsProvider[]{javaws, itws, pe, itw};
+         for (TextsProvider provider : providers) {
+             provider.setAuthorFilePath(authorFileFromUserInput);
+             provider.writeToDir(dir);
+@@ -520,8 +519,7 @@
+         ItwebSettingsTextsProvider itws = new ItwebSettingsTextsProvider(encoding, new ManFormatter(), titles, expand);
+         PolicyEditorTextsProvider pe = new PolicyEditorTextsProvider(encoding, new ManFormatter(), titles, expand);
+         IcedTeaWebTextsProvider itw = new IcedTeaWebTextsProvider(encoding, new ManFormatter(), titles, expand);
+-        ItwebPluginTextProvider pl = new ItwebPluginTextProvider(encoding, new ManFormatter(), titles, expand);
+-        TextsProvider[] providers = new TextsProvider[]{javaws, itws, pe, itw, pl};
++        TextsProvider[] providers = new TextsProvider[]{javaws, itws, pe, itw};
+         for (TextsProvider provider : providers) {
+             provider.setAuthorFilePath(authorFileFromUserInput);
+             provider.writeToDir(dir);
+@@ -538,8 +536,7 @@
+         ItwebSettingsTextsProvider itws = new ItwebSettingsTextsProvider(encoding, new PlainTextFormatter(indent, lineWidth), titles, expand);
+         PolicyEditorTextsProvider pe = new PolicyEditorTextsProvider(encoding, new PlainTextFormatter(indent, lineWidth), titles, expand);
+         IcedTeaWebTextsProvider itw = new IcedTeaWebTextsProvider(encoding, new PlainTextFormatter(indent, lineWidth), titles, expand);
+-        ItwebPluginTextProvider pl = new ItwebPluginTextProvider(encoding, new PlainTextFormatter(indent, lineWidth), titles, expand);
+-        TextsProvider[] providers = new TextsProvider[]{javaws, itws, pe, itw, pl};
++        TextsProvider[] providers = new TextsProvider[]{javaws, itws, pe, itw};
+         for(TextsProvider provider : providers){
+             provider.setAuthorFilePath(authorFileFromUserInput);
+             provider.writeToDir(dir);
+--- IcedTea-Web-icedtea-web-1.8.8-test/Makefile.am	2021-10-27 22:13:18.000000000 +0200
++++ IcedTea-Web-icedtea-web-1.8.8-test/Makefile.am.applet	2022-07-08 02:11:20.432100432 +0200
+@@ -899,7 +899,7 @@
+ 	LANG_BACKUP=$$LANG ; \
+ 	echo "<html><head><title>$(PLUGIN_VERSION)</title></head>" > "$$HTML_DOCS_INDEX" ; \
+ 	echo "<body><h3>$(PLUGIN_VERSION) docs:</h3>"  >> "$$HTML_DOCS_INDEX" ; \
+-	for LANG_ID in en_US.UTF-8 cs_CZ.UTF-8 pl_PL.UTF-8 de_DE.UTF-8 ;  do \
++	for LANG_ID in en_US.UTF-8 ;  do \
+ 	  ID=`echo "$$LANG_ID" | head -c 2` ; \
+ 	  ENCOD=`echo "$$LANG_ID" | tail -c 6 -` ; \
+ 	  export LANG=$$LANG_ID; \
