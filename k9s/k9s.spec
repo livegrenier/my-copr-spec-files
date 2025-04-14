@@ -1,5 +1,5 @@
 Name:           k9s
-Version:        0.32.5
+Version:        0.50.3
 Release:        1%{?dist}
 Summary:        Kubernetes CLI To Manage Your Clusters In Style!
 License:        Apache-2.0
@@ -73,6 +73,5 @@ install -D -m 0755 %{_builddir}/%{name}-%{version}/execs/%{name} "%{buildroot}/%
 %license LICENSE
 %doc README.md
 %{_bindir}/%{name}
-
 
 %changelog
