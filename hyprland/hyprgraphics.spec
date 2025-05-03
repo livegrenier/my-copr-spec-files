@@ -1,17 +1,7 @@
-## START: Set by rpmautospec
-## (rpmautospec version 0.7.3)
-## RPMAUTOSPEC: autorelease, autochangelog
-%define autorelease(e:s:pb:n) %{?-p:0.}%{lua:
-    release_number = 1;
-    base_release_number = tonumber(rpm.expand("%{?-b*}%{!?-b:1}"));
-    print(release_number + base_release_number - 1);
-}%{?-e:.%{-e*}}%{?-s:.%{-s*}}%{!?-n:%{?dist}}
-## END: Set by rpmautospec
-
 Name:           hyprgraphics
 Version:        0.1.3
-Release:        0.1
-Summary:        Hyprland graphics library used across the ecosystem
+Release:        %autorelease -b2
+Summary:        Hyprland graphics / resource utilities
 
 License:        BSD-3-Clause
 URL:            https://github.com/hyprwm/hyprgraphics
@@ -22,14 +12,17 @@ ExcludeArch:    %{ix86}
 
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
+
 BuildRequires:  pkgconfig(cairo)
 BuildRequires:  pkgconfig(hyprutils)
 BuildRequires:  pkgconfig(libjpeg)
-BuildRequires:  pkgconfig(libwebp)
-BuildRequires:  pkgconfig(libjxl)
+%if 0%{?fedora} >= 41
 BuildRequires:  pkgconfig(libjxl_cms)
 BuildRequires:  pkgconfig(libjxl_threads)
+BuildRequires:  pkgconfig(libjxl)
+%endif
 BuildRequires:  pkgconfig(libmagic)
+BuildRequires:  pkgconfig(libwebp)
 BuildRequires:  pkgconfig(pixman-1)
 BuildRequires:  pkgconfig(spng)
 
@@ -58,8 +51,8 @@ Development files for %{name}.
 %files
 %license LICENSE
 %doc README.md
-%{_libdir}/lib%{name}.so.%{version}
 %{_libdir}/lib%{name}.so.0
+%{_libdir}/lib%{name}.so.%{version}
 
 %files devel
 %{_includedir}/%{name}/
@@ -67,11 +60,4 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
-* Mon Apr 07 2025 ploxold - 0.1.3-0.1
-- Update to 0.1.3
-
-* Wed Feb 05 2025 ploxold - 0.1.2-0.1
-- Update to 0.1.2
-
-* Tue Jan 07 2025 ploxold - 0.1.1-0.5
-- Initial import
+%autochangelog
