@@ -1,10 +1,10 @@
-%global hyprland_commit d679d200299ed4670f0d0f138c793d5f507b7cec
+%global hyprland_commit a46576afc32d7fbad6c358cc72ead7f4489d8ea8
 %global hyprland_shortcommit %(c=%{hyprland_commit}; echo ${c:0:7})
-%global bumpver 31
-%global commits_count 5390
-%global commit_date Mon Oct 28 07:25:27 2024
+#%%global bumpver 1
+%global commits_count 5941
+%global commit_date Fri Mar 28 04:12:25 2025
 
-%global protocols_commit c7c3f4cd0faed21fc90ba6bd06fe4f3e0e057ea8
+%global protocols_commit 755aef8dab49d0fc4663c715fa4ad221b2aedaed
 %global protocols_shortcommit %(c=%{protocols_commit}; echo ${c:0:7})
 
 %global udis86_commit 5336633af70f3917760a6d441ff02d93477b0c86
@@ -12,9 +12,9 @@
 
 %bcond legacyrenderer 0
 
-Name:           hyprland-git
+Name:           hyprland
 Version:        0.48.1%{?bumpver:^%{bumpver}.git%{hyprland_shortcommit}}
-Release:        %autorelease
+Release:        %autorelease -b3
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
 # hyprland: BSD-3-Clause
@@ -41,6 +41,7 @@ hyprdeps = {
     "gcc-c++",
     "git-core",
     "meson",
+    "glaze-static",
     "pkgconfig(aquamarine)",
     "pkgconfig(cairo)",
     "pkgconfig(egl)",
@@ -49,6 +50,7 @@ hyprdeps = {
     "pkgconfig(glesv2)",
     "pkgconfig(hwdata)",
     "pkgconfig(hyprcursor)",
+    "pkgconfig(hyprgraphics)",
     "pkgconfig(hyprlang)",
     "pkgconfig(hyprutils)",
     "pkgconfig(hyprwayland-scanner)",
@@ -61,6 +63,8 @@ hyprdeps = {
     "pkgconfig(pango)",
     "pkgconfig(pangocairo)",
     "pkgconfig(pixman-1)",
+    "pkgconfig(re2)",
+    "pkgconfig(systemd)",
     "pkgconfig(tomlplusplus)",
     "pkgconfig(uuid)",
     "pkgconfig(wayland-client)",
@@ -83,7 +87,7 @@ hyprdeps = {
     "pkgconfig(xcb)",
     "pkgconfig(xcursor)",
     "pkgconfig(xkbcommon)",
-    "pkgconfig(xwayland)"
+    "pkgconfig(xwayland)",
     }
 }
 
@@ -99,10 +103,8 @@ end
 # modified fork.
 Provides:       bundled(udis86) = 1.7.2^1.%{udis86_shortcommit}
 
-Requires:       libdrm%{?_isa} >= 2.4.120
 Requires:       xorg-x11-server-Xwayland%{?_isa}
 Requires:       hyprcursor%{?_isa} >= 0.1.9
-Requires:       hyprutils%{?_isa} >= 0.2.3
 
 %{lua:do
 if string.match(rpm.expand('%{name}'), '%-git$') then
@@ -124,10 +126,13 @@ Recommends:     kitty
 Recommends:     wofi
 Recommends:     playerctl
 Recommends:     brightnessctl
+Recommends:     hyprland-qtutils
 # Lack of graphical drivers may hurt the common use case
 Recommends:     mesa-dri-drivers
 # Logind needs polkit to create a graphical session
 Recommends:     polkit
+# https://wiki.hyprland.org/Useful-Utilities/Systemd-start
+Recommends:     %{name}-uwsm
 
 Recommends:     (qt5-qtwayland if qt5-qtbase-gui)
 Recommends:     (qt6-qtwayland if qt6-qtbase-gui)
@@ -137,6 +142,12 @@ Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice
 on its looks. It supports multiple layouts, fancy effects, has a
 very flexible IPC model allowing for a lot of customization, a powerful
 plugin system and more.
+
+%package        uwsm
+Summary:        Files for a uwsm-managed session
+Requires:       uwsm
+%description    uwsm
+Files for a uwsm-managed session.
 
 %package        devel
 Summary:        Header and protocol files for %{name}
@@ -171,9 +182,6 @@ sed -e 's|^HASH=.*|HASH=%{hyprland_commit}|' \
     -e 's|^DATE=.*|DATE="%{commit_date}"|' \
     -e 's|^COMMITS=.*|COMMITS=%{commits_count}|' \
     -i scripts/generateVersion.sh
-%else
-%autopatch -p1
-sed -i '/scripts\/generateVersion.sh/d' meson.build
 %endif
 
 cp -p subprojects/hyprland-protocols/LICENSE LICENSE-hyprland-protocols
@@ -185,25 +193,25 @@ sed -i \
 
 
 %build
-%meson \
+%cmake \
+    -GNinja \
+    -DCMAKE_BUILD_TYPE=Release \
 %if %{with legacyrenderer}
-       -Dlegacy_renderer=enabled \
+    -DLEGACY_RENDERER:BOOL=ON \
 %endif
 %{nil}
-%meson_build
+%cmake_build
 
 
 %install
-%meson_install
-rm %{buildroot}%{_libdir}/systemd/user/hyprland-session.service \
-   %{buildroot}%{_datadir}/wayland-sessions/hyprland-systemd.desktop
+%cmake_install
 install -Dpm644 %{SOURCE4} -t %{buildroot}%{_rpmconfigdir}/macros.d
 
 
 %files
 %license LICENSE LICENSE-udis86 LICENSE-hyprland-protocols
+%{_bindir}/[Hh]yprland
 %{_bindir}/hyprctl
-%{_bindir}/Hyprland
 %{_bindir}/hyprpm
 %{_datadir}/hypr/
 %{_datadir}/wayland-sessions/hyprland.desktop
@@ -214,9 +222,11 @@ install -Dpm644 %{SOURCE4} -t %{buildroot}%{_rpmconfigdir}/macros.d
 %{fish_completions_dir}/hypr*.fish
 %{zsh_completions_dir}/_hypr*
 
+%files uwsm
+%{_datadir}/wayland-sessions/hyprland-uwsm.desktop
+
 %files devel
-%{_datadir}/hyprland-protocols/
-%{_datadir}/pkgconfig/hyprland*.pc
+%{_datadir}/pkgconfig/hyprland.pc
 %{_includedir}/hyprland/
 %{_rpmconfigdir}/macros.d/macros.hyprland
 
