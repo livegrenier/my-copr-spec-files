@@ -1,94 +1,123 @@
-## START: Set by rpmautospec
-## (rpmautospec version 0.7.3)
-## RPMAUTOSPEC: autorelease, autochangelog
-%define autorelease(e:s:pb:n) %{?-p:0.}%{lua:
-    release_number = 1;
-    base_release_number = tonumber(rpm.expand("%{?-b*}%{!?-b:1}"));
-    print(release_number + base_release_number - 1);
-}%{?-e:.%{-e*}}%{?-s:.%{-s*}}%{!?-n:%{?dist}}
-## END: Set by rpmautospec
+%global hyprland_commit d679d200299ed4670f0d0f138c793d5f507b7cec
+%global hyprland_shortcommit %(c=%{hyprland_commit}; echo ${c:0:7})
+%global bumpver 31
+%global commits_count 5390
+%global commit_date Mon Oct 28 07:25:27 2024
 
-Name:           hyprland
-Version:        0.48.1
-Release:        0.1.1
+%global protocols_commit c7c3f4cd0faed21fc90ba6bd06fe4f3e0e057ea8
+%global protocols_shortcommit %(c=%{protocols_commit}; echo ${c:0:7})
+
+%global udis86_commit 5336633af70f3917760a6d441ff02d93477b0c86
+%global udis86_shortcommit %(c=%{udis86_commit}; echo ${c:0:7})
+
+%bcond legacyrenderer 0
+
+Name:           hyprland-git
+Version:        0.48.1%{?bumpver:^%{bumpver}.git%{hyprland_shortcommit}}
+Release:        %autorelease
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
 # hyprland: BSD-3-Clause
-# ./subprojects/udis86: BSD-2-Clause
-# ./protocols/kde-server-decoration.xml: LGPL-2.1-or-later
-# ./protocols/wayland-drm.xml: HPND-sell-variant and/or ntp_disclaimer
-# ./protocols/wlr-data-control-unstable-v1.xml: HPND-sell-variant and/or ntp_disclaimer
-# ./protocols/wlr-foreign-toplevel-management-unstable-v1.xml: HPND-sell-variant and/or ntp_disclaimer
-# ./protocols/wlr-gamma-control-unstable-v1.xml: HPND-sell-variant and/or ntp_disclaimer
-# ./protocols/wlr-layer-shell-unstable-v1.xml: HPND-sell-variant and/or ntp_disclaimer
-# ./protocols/wlr-output-management-unstable-v1.xml: HPND-sell-variant and/or ntp_disclaimer
-License:        BSD-3-Clause AND BSD-2-Clause AND LGPL-2.1-or-later AND HPND-sell-variant
+# subprojects/hyprland-protocols: BSD-3-Clause
+# subproject/udis86: BSD-2-Clause
+# protocols/ext-workspace-unstable-v1.xml: HPND-sell-variant
+# protocols/wlr-foreign-toplevel-management-unstable-v1.xml: HPND-sell-variant
+# protocols/wlr-layer-shell-unstable-v1.xml: HPND-sell-variant
+# protocols/idle.xml: LGPL-2.1-or-later
+License:        BSD-3-Clause AND BSD-2-Clause AND HPND-sell-variant AND LGPL-2.1-or-later
 URL:            https://github.com/hyprwm/Hyprland
-Source:         %{url}/releases/download/v%{version}/source-v%{version}.tar.gz
+%if 0%{?bumpver}
+Source0:        %{url}/archive/%{hyprland_commit}/%{name}-%{hyprland_shortcommit}.tar.gz
+Source2:        https://github.com/hyprwm/hyprland-protocols/archive/%{protocols_commit}/protocols-%{protocols_shortcommit}.tar.gz
+Source3:        https://github.com/canihavesomecoffee/udis86/archive/%{udis86_commit}/udis86-%{udis86_shortcommit}.tar.gz
+%else
+Source0:        %{url}/releases/download/v%{version}/source-v%{version}.tar.gz
+%endif
+Source4:        macros.hyprland
 
-# https://fedoraproject.org/wiki/Changes/EncourageI686LeafRemoval
-ExcludeArch:    %{ix86}
+%{lua:
+hyprdeps = {
+    "cmake",
+    "gcc-c++",
+    "git-core",
+    "meson",
+    "pkgconfig(aquamarine)",
+    "pkgconfig(cairo)",
+    "pkgconfig(egl)",
+    "pkgconfig(gbm)",
+    "pkgconfig(gio-2.0)",
+    "pkgconfig(glesv2)",
+    "pkgconfig(hwdata)",
+    "pkgconfig(hyprcursor)",
+    "pkgconfig(hyprlang)",
+    "pkgconfig(hyprutils)",
+    "pkgconfig(hyprwayland-scanner)",
+    "pkgconfig(libdisplay-info)",
+    "pkgconfig(libdrm)",
+    "pkgconfig(libinput)",
+    "pkgconfig(libliftoff)",
+    "pkgconfig(libseat)",
+    "pkgconfig(libudev)",
+    "pkgconfig(pango)",
+    "pkgconfig(pangocairo)",
+    "pkgconfig(pixman-1)",
+    "pkgconfig(tomlplusplus)",
+    "pkgconfig(uuid)",
+    "pkgconfig(wayland-client)",
+    "pkgconfig(wayland-protocols)",
+    "pkgconfig(wayland-scanner)",
+    "pkgconfig(wayland-server)",
+    "pkgconfig(xcb-composite)",
+    "pkgconfig(xcb-dri3)",
+    "pkgconfig(xcb-errors)",
+    "pkgconfig(xcb-ewmh)",
+    "pkgconfig(xcb-icccm)",
+    "pkgconfig(xcb-present)",
+    "pkgconfig(xcb-render)",
+    "pkgconfig(xcb-renderutil)",
+    "pkgconfig(xcb-res)",
+    "pkgconfig(xcb-shm)",
+    "pkgconfig(xcb-util)",
+    "pkgconfig(xcb-xfixes)",
+    "pkgconfig(xcb-xinput)",
+    "pkgconfig(xcb)",
+    "pkgconfig(xcursor)",
+    "pkgconfig(xkbcommon)",
+    "pkgconfig(xwayland)"
+    }
+}
 
-BuildRequires:  cmake
-BuildRequires:  gcc-c++
-BuildRequires:  glaze-static
-BuildRequires:  meson
+%define printbdeps(r) %{lua:
+for _, dep in ipairs(hyprdeps) do
+    print((rpm.expand("%{-r}") ~= "" and "Requires: " or "BuildRequires: ")..dep.."\\n")
+end
+}
 
-BuildRequires:  pkgconfig(aquamarine)
-BuildRequires:  pkgconfig(cairo)
-BuildRequires:  pkgconfig(egl)
-BuildRequires:  pkgconfig(gbm)
-BuildRequires:  pkgconfig(gio-2.0)
-BuildRequires:  pkgconfig(glesv2)
-BuildRequires:  pkgconfig(hwdata)
-BuildRequires:  pkgconfig(hyprcursor)
-BuildRequires:  pkgconfig(hyprgraphics)
-BuildRequires:  pkgconfig(hyprland-protocols) >= 0.6.2
-BuildRequires:  pkgconfig(hyprlang)
-BuildRequires:  pkgconfig(hyprutils)
-BuildRequires:  pkgconfig(hyprwayland-scanner)
-BuildRequires:  pkgconfig(libdisplay-info)
-BuildRequires:  pkgconfig(libdrm)
-BuildRequires:  pkgconfig(libinput)
-BuildRequires:  pkgconfig(libliftoff)
-BuildRequires:  pkgconfig(libseat)
-BuildRequires:  pkgconfig(libudev)
-BuildRequires:  pkgconfig(pango)
-BuildRequires:  pkgconfig(pangocairo)
-BuildRequires:  pkgconfig(pixman-1)
-BuildRequires:  pkgconfig(re2)
-BuildRequires:  pkgconfig(systemd)
-BuildRequires:  pkgconfig(tomlplusplus)
-BuildRequires:  pkgconfig(uuid)
-BuildRequires:  pkgconfig(wayland-client)
-BuildRequires:  pkgconfig(wayland-protocols)
-BuildRequires:  pkgconfig(wayland-server)
-BuildRequires:  pkgconfig(xcb-composite)
-BuildRequires:  pkgconfig(xcb-dri3)
-BuildRequires:  pkgconfig(xcb-errors)
-BuildRequires:  pkgconfig(xcb-ewmh)
-BuildRequires:  pkgconfig(xcb-icccm)
-BuildRequires:  pkgconfig(xcb-present)
-BuildRequires:  pkgconfig(xcb-render)
-BuildRequires:  pkgconfig(xcb-renderutil)
-BuildRequires:  pkgconfig(xcb-res)
-BuildRequires:  pkgconfig(xcb-shm)
-BuildRequires:  pkgconfig(xcb-util)
-BuildRequires:  pkgconfig(xcb-xfixes)
-BuildRequires:  pkgconfig(xcb-xinput)
-BuildRequires:  pkgconfig(xcb)
-BuildRequires:  pkgconfig(xcursor)
-BuildRequires:  pkgconfig(xkbcommon)
-BuildRequires:  pkgconfig(xwayland)
+%printbdeps
 
 # udis86 is packaged in Fedora, but the copy bundled here is actually a
 # modified fork.
-Provides:       bundled(udis86) = 1.7.2^1.git5336633
+Provides:       bundled(udis86) = 1.7.2^1.%{udis86_shortcommit}
 
+Requires:       libdrm%{?_isa} >= 2.4.120
 Requires:       xorg-x11-server-Xwayland%{?_isa}
-Requires:       xdg-desktop-portal%{?_isa}
-Requires:       hyprcursor%{?_isa} >= 0.1.12
-Requires:       hyprutils%{?_isa} >= 0.5.0
+Requires:       hyprcursor%{?_isa} >= 0.1.9
+Requires:       hyprutils%{?_isa} >= 0.2.3
+
+%{lua:do
+if string.match(rpm.expand('%{name}'), '%-git$') then
+    print('Conflicts: hyprland'..'\n')
+    print('Obsoletes: hyprland-nvidia-git < 0.32.3^30.gitad3f688-2'..'\n')
+    print(rpm.expand('Provides: hyprland-nvidia-git = %{version}-%{release}')..'\n')
+    print('Obsoletes: hyprland-aquamarine-git < 0.41.2^20.git4b84029-2'..'\n')
+elseif not string.match(rpm.expand('%{name}'), 'hyprland$') then
+    print(rpm.expand('Provides: hyprland = %{version}-%{release}')..'\n')
+    print('Conflicts: hyprland'..'\n')
+else
+    print('Obsoletes: hyprland-nvidia < 1:0.32.3-2'..'\n')
+    print(rpm.expand('Provides: hyprland-nvidia = %{version}-%{release}')..'\n')
+end
+end}
 
 # Used in the default configuration
 Recommends:     kitty
@@ -110,90 +139,75 @@ very flexible IPC model allowing for a lot of customization, a powerful
 plugin system and more.
 
 %package        devel
-Summary:        Meta package to install dependencies for hyprpm
+Summary:        Header and protocol files for %{name}
+License:        BSD-3-Clause
 Requires:       %{name}%{?_isa} = %{version}-%{release}
-Requires:       cmake
 Requires:       cpio
-Requires:       gcc-c++
-Requires:       meson
-Requires:       ninja-build
-Requires:       pkgconfig(aquamarine)
-Requires:       pkgconfig(cairo)
-Requires:       pkgconfig(egl)
-Requires:       pkgconfig(gbm)
-Requires:       pkgconfig(glesv2)
-Requires:       pkgconfig(hwdata)
-Requires:       pkgconfig(hyprcursor)
-Requires:       pkgconfig(hyprlang)
-Requires:       pkgconfig(hyprutils)
-Requires:       pkgconfig(hyprwayland-scanner)
-Requires:       pkgconfig(libdisplay-info)
-Requires:       pkgconfig(libdrm)
-Requires:       pkgconfig(libinput)
-Requires:       pkgconfig(libliftoff)
-Requires:       pkgconfig(libseat)
-Requires:       pkgconfig(libudev)
-Requires:       pkgconfig(pango)
-Requires:       pkgconfig(pangocairo)
-Requires:       pkgconfig(pixman-1)
-Requires:       pkgconfig(tomlplusplus)
-Requires:       pkgconfig(uuid)
-Requires:       pkgconfig(wayland-client)
-Requires:       pkgconfig(wayland-protocols)
-Requires:       pkgconfig(wayland-server)
-Requires:       pkgconfig(xcb-composite)
-Requires:       pkgconfig(xcb-dri3)
-Requires:       pkgconfig(xcb-errors)
-Requires:       pkgconfig(xcb-ewmh)
-Requires:       pkgconfig(xcb-icccm)
-Requires:       pkgconfig(xcb-present)
-Requires:       pkgconfig(xcb-render)
-Requires:       pkgconfig(xcb-renderutil)
-Requires:       pkgconfig(xcb-res)
-Requires:       pkgconfig(xcb-shm)
-Requires:       pkgconfig(xcb-util)
-Requires:       pkgconfig(xcb-xfixes)
-Requires:       pkgconfig(xcb-xinput)
-Requires:       pkgconfig(xcb)
-Requires:       pkgconfig(xcursor)
-Requires:       pkgconfig(xkbcommon)
-Requires:       pkgconfig(xwayland)
-Recommends:     git-core
+%{lua:do
+if string.match(rpm.expand('%{name}'), 'hyprland%-git$') then
+    print('Obsoletes: hyprland-nvidia-git-devel < 0.32.3^30.gitad3f688-2'..'\n')
+    print(rpm.expand('Provides: hyprland-nvidia-git-devel = %{version}-%{release}')..'\n')
+    print('Obsoletes: hyprland-aquamarine-git-devel < 0.41.2^20.git4b84029-2'..'\n')
+elseif string.match(rpm.expand('%{name}'), 'hyprland$') then
+    print('Obsoletes: hyprland-nvidia-devel < 1:0.32.3-2'..'\n')
+    print(rpm.expand('Provides: hyprland-nvidia-devel = %{version}-%{release}')..'\n')
+end
+end}
+%printbdeps -r
 
 %description    devel
 %{summary}.
 
 
 %prep
-%autosetup -n %{name}-source -p1
-rm -rf subprojects/{tracy,hyprland-protocols}
-# don't run generateVersion.sh, release tarballs have pregenerated version.h
-sed -i '/scripts\/generateVersion.sh/d' meson.build
+%autosetup -n %{?bumpver:Hyprland-%{hyprland_commit}} %{!?bumpver:hyprland-source} -N
 
+%if 0%{?bumpver}
+tar -xf %{SOURCE2} -C subprojects/hyprland-protocols --strip=1
+tar -xf %{SOURCE3} -C subprojects/udis86 --strip=1
+sed -e 's|^HASH=.*|HASH=%{hyprland_commit}|' \
+    -e 's|^DIRTY=.*|DIRTY=|' \
+    -e 's|^BRANCH=.*|BRANCH=main|' \
+    -e 's|^DATE=.*|DATE="%{commit_date}"|' \
+    -e 's|^COMMITS=.*|COMMITS=%{commits_count}|' \
+    -i scripts/generateVersion.sh
+%else
+%autopatch -p1
+sed -i '/scripts\/generateVersion.sh/d' meson.build
+%endif
+
+cp -p subprojects/hyprland-protocols/LICENSE LICENSE-hyprland-protocols
 cp -p subprojects/udis86/LICENSE LICENSE-udis86
+
+sed -i \
+  -e "s|@@HYPRLAND_VERSION@@|%{version}|g" \
+  %{SOURCE4}
 
 
 %build
-%meson
+%meson \
+%if %{with legacyrenderer}
+       -Dlegacy_renderer=enabled \
+%endif
+%{nil}
 %meson_build
 
 
 %install
 %meson_install
-rm %{buildroot}%{_datadir}/wayland-sessions/hyprland-uwsm.desktop
-rm -rf %{buildroot}%{_includedir}/%{name}
-rm -rf %{buildroot}%{_datadir}/pkgconfig/%{name}.pc
+rm %{buildroot}%{_libdir}/systemd/user/hyprland-session.service \
+   %{buildroot}%{_datadir}/wayland-sessions/hyprland-systemd.desktop
+install -Dpm644 %{SOURCE4} -t %{buildroot}%{_rpmconfigdir}/macros.d
 
 
 %files
-%license LICENSE LICENSE-udis86
+%license LICENSE LICENSE-udis86 LICENSE-hyprland-protocols
 %{_bindir}/hyprctl
 %{_bindir}/Hyprland
-%{_bindir}/hyprland
 %{_bindir}/hyprpm
 %{_datadir}/hypr/
-%{_datadir}/wayland-sessions/%{name}.desktop
-%{_datadir}/xdg-desktop-portal/%{name}-portals.conf
+%{_datadir}/wayland-sessions/hyprland.desktop
+%{_datadir}/xdg-desktop-portal/hyprland-portals.conf
 %{_mandir}/man1/hyprctl.1*
 %{_mandir}/man1/Hyprland.1*
 %{bash_completions_dir}/hypr*
@@ -201,136 +215,11 @@ rm -rf %{buildroot}%{_datadir}/pkgconfig/%{name}.pc
 %{zsh_completions_dir}/_hypr*
 
 %files devel
+%{_datadir}/hyprland-protocols/
+%{_datadir}/pkgconfig/hyprland*.pc
+%{_includedir}/hyprland/
+%{_rpmconfigdir}/macros.d/macros.hyprland
 
 
 %changelog
-* Sun Mar 30 2025 ploxold - 0.48.1-0.1
-- Update to 0.48.1
-
-* Sun Mar 23 2025 ploxold - 0.48.0-0.1
-- Update to 0.48.0
-
-* Sun Feb 02 2025 ploxold - 0.47.2-0.1
-- Update to 0.47.2
-
-* Thu Jan 30 2025 ploxold - 0.47.1-0.1
-- Update to 0.47.1
-
-* Mon Jan 27 2025 ploxold - 0.47.0-0.1
-- Update to 0.47.0
-
-* Tue Jan 07 2025 ploxold - 0.46.2-0.5
-- Update to 0.46.2
-
-## START: Generated by rpmautospec
-* Fri Nov 22 2024 Jannik MÃ¼ller <nightishaman@fedoraproject.org> - 0.45.2-1
-- Update to 0.45.2
-
-* Mon Nov 18 2024 Jannik MÃ¼ller <nightishaman@fedoraproject.org> - 0.45.1-1
-- Update to 0.45.1
-
-* Sat Nov 09 2024 Pavel Solovev <daron439@gmail.com> - 0.45.0-1
-- Update to 0.45.0
-
-* Wed Oct 09 2024 Pavel Solovev <daron439@gmail.com> - 0.44.1-1
-- Update to 0.44.1
-
-* Sun Oct 06 2024 Pavel Solovev <daron439@gmail.com> - 0.44.0-1
-- Update to 0.44.0
-
-* Sun Sep 08 2024 Pavel Solovev <daron439@gmail.com> - 0.43.0-1
-- Update to 0.43.0
-
-* Mon Sep 02 2024 Pavel Solovev <daron439@gmail.com> - 0.42.0-2
-- aquamarine rebuild
-
-* Wed Aug 07 2024 Pavel Solovev <daron439@gmail.com> - 0.42.0-1
-- Update to 0.42.0
-
-* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.41.2-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
-
-* Wed Jul 17 2024 Pavel Solovev <daron439@gmail.com> - 0.41.2-3
-- hyprutils rebuild
-
-* Wed Jul 03 2024 Pavel Solovev <daron439@gmail.com> - 0.41.2-2
-- libdisplay-info rebuild
-
-* Tue Jun 25 2024 Pavel Solovev <daron439@gmail.com> - 0.41.2-1
-- Update to 0.41.2
-
-* Thu Jun 13 2024 Pavel Solovev <daron439@gmail.com> - 0.41.1-1
-- Update to 0.41.1
-
-* Mon Jun 10 2024 Pavel Solovev <daron439@gmail.com> - 0.41.0-1
-- Update to 0.41.0
-
-* Tue Jun 04 2024 Pavel Solovev <daron439@gmail.com> - 0.40.0-2
-- add deps for hyprpm
-
-* Sat Jun 01 2024 Pavel Solovev <daron439@gmail.com> - 0.40.0-1
-- Update to 0.40.0
-
-* Sat Apr 27 2024 Pavel Solovev <daron439@gmail.com> - 0.39.1-2
-- minor spec tweaking
-
-* Tue Apr 16 2024 Pavel Solovev <daron439@gmail.com> - 0.39.1-1
-- Update to 0.39.1
-
-* Sun Apr 14 2024 Pavel Solovev <daron439@gmail.com> - 0.39.0-1
-- Update to 0.39.0
-
-* Sun Apr 07 2024 Pavel Solovev <daron439@gmail.com> - 0.38.1-1
-- Update to 0.38.1 (rhbz#2273790)
-
-* Mon Apr 01 2024 Pavel Solovev <daron439@gmail.com> - 0.38.0-1
-- Update to 0.38.0
-
-* Mon Mar 18 2024 Pavel Solovev <daron439@gmail.com> - 0.37.1-1
-- Update to 0.37.1
-
-* Mon Mar 11 2024 Pavel Solovev <daron439@gmail.com> - 0.36.0-3
-- hyprlang rebuild
-
-* Mon Mar 04 2024 Pavel Solovev <daron439@gmail.com> - 0.36.0-2
-- Add missing dep
-
-* Wed Feb 28 2024 Pavel Solovev <daron439@gmail.com> - 0.36.0-1
-- Update to 0.36.0
-
-* Mon Feb 05 2024 Pavel Solovev <daron439@gmail.com> - 0.35.0-1
-- Update to 0.35.0
-
-* Wed Jan 24 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.34.0-5
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
-
-* Sat Jan 20 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.34.0-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
-
-* Wed Jan 17 2024 Pavel Solovev <daron439@gmail.com> - 0.34.0-3
-- Disable werror in wlroots
-
-* Wed Jan 17 2024 Pavel Solovev <daron439@gmail.com> - 0.34.0-2
-- prevent partial update
-
-* Mon Jan 15 2024 Pavel Solovev <daron439@gmail.com> - 0.34.0-1
-- Update to 0.34.0
-
-* Mon Nov 20 2023 Pavel Solovev <daron439@gmail.com> - 0.32.3-2
-- add dependencies for the devel package
-
-* Sat Nov 11 2023 Pavel Solovev <daron439@gmail.com> - 0.32.3-1
-- Update to 0.32.3
-
-* Sat Nov 11 2023 Pavel Solovev <daron439@gmail.com> - 0.32.2-1
-- Update to 0.32.2
-
-* Sat Nov 11 2023 Pavel Solovev <daron439@gmail.com> - 0.32.1-1
-- Update to 0.32.1
-
-* Tue Nov 07 2023 Pavel Solovev <daron439@gmail.com> - 0.32.0-1
-- Update to 0.32.0
-
-* Sun Nov 05 2023 Pavel Solovev <daron439@gmail.com> - 0.31.0-1
-- Initial import (rhbz#2244377)
-## END: Generated by rpmautospec
+%autochangelog
