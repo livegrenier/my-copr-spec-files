@@ -1,31 +1,32 @@
-%define __spec_install_post %{nil}
-%define __os_install_post %{_dbpath}/brp-compress
-%define debug_package %{nil}
+Name:           hyprswitch
+Version:        3.3.2
+Release:        %autorelease
+Summary:        A CLI/GUI that allows switching between windows in Hyprland
 
-Name: hyprswitch
-Summary: A CLI/GUI that allows switching between windows in Hyprland
-Version: @@VERSION@@
-Release: @@RELEASE@@%{?dist}
-License: MIT
-Group: Applications/System
-Source0: %{name}-%{version}.tar.gz
+License:        MIT
+URL:            https://github.com/H3rmt/hyprswitch
+Source:         %{url}/archive/refs/tags/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRequires:  rust
+BuildRequires:  cargo
+ExclusiveArch:  %{rust_arches}
 
 %description
 %{summary}
 
 %prep
-%setup -q
+%autosetup -n %{name}-%{version}
+
+%build
+%cargo_build
 
 %install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}
-cp -a * %{buildroot}
-
-%clean
-rm -rf %{buildroot}
+%cargo_install
 
 %files
-%defattr(-,root,root,-)
-%{_bindir}/*
+%license LICENSE
+%doc README.md
+%{_bindir}/hyprswitch
+
+%changelog
+%autochangelog
