@@ -8,6 +8,7 @@ URL:            https://github.com/H3rmt/hyprswitch
 Source:         %{url}/archive/refs/tags/v%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  rust
+BuildRequires: rust-packaging
 BuildRequires:  cargo
 ExclusiveArch:  %{rust_arches}
 
