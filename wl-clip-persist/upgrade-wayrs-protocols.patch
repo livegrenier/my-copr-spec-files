@@ -9,3 +9,4 @@ diff -ru wl-clip-persist-0.4.1-orig/Cargo.toml wl-clip-persist-0.4.1/Cargo.toml
 +wayrs-protocols = { version = "0.14", features = ["wlr-data-control-unstable-v1"] }
  fancy-regex = "0.13"
  libc = "0.2"
+ 
