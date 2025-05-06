@@ -1,0 +1,11 @@
+diff -ru wl-clip-persist-0.4.1-orig/Cargo.toml wl-clip-persist-0.4.1/Cargo.toml
+--- wl-clip-persist-0.4.1-orig/Cargo.toml	2024-05-02 16:01:39.637647447 +0000
++++ wl-clip-persist-0.4.1/Cargo.toml	2024-05-02 16:02:03.176152392 +0000
+@@ -19,7 +19,7 @@
+ tokio-pipe = "0.2"
+ futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+ wayrs-client = { version = "1.0", features = ["tokio"] }
+-wayrs-protocols = { version = "0.13", features = ["wlr-data-control-unstable-v1"] }
++wayrs-protocols = { version = "0.14", features = ["wlr-data-control-unstable-v1"] }
+ fancy-regex = "0.13"
+ libc = "0.2"
