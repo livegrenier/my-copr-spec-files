@@ -1,6 +1,6 @@
-%global commit0 c25ee86113d99ec9188d218442f7e93ee62aef27
+%global commit0 4783860953a0777fee43d45fee0df9173f9e8c9e
 %global shortcommit0 %(c=%{commit0}; echo ${c:0:7})
-%global bumpver 1096
+%global bumpver 1152
 
 %global __provides_exclude_from ^(%{_libdir}/hyprland/.*\\.so)$
 
@@ -15,7 +15,7 @@
                 xtra-dispatchers
 }
 
-%global build_for release
+%global build_for git
 
 %define pluginsmeta %{lua:
 if rpm.expand("%build_for") == "git" then
@@ -38,7 +38,6 @@ Summary:        Official plugins for Hyprland
 License:        BSD-3-Clause
 URL:            https://github.com/hyprwm/hyprland-plugins
 Source:         %{url}/archive/%{commit0}/%{name}-%{commit0}.tar.gz
-Patch:          hyprtrails.diff
 
 BuildRequires:  gcc-c++
 BuildRequires:  meson
