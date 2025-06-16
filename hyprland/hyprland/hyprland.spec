@@ -1,8 +1,8 @@
-%global hyprland_commit d4e8a440874bebed07a5908009a3d854120277ed
+%global hyprland_commit 9958d297641b5c84dcff93f9039d80a5ad37ab00
 %global hyprland_shortcommit %(c=%{hyprland_commit}; echo ${c:0:7})
-%global bumpver 57
-%global commits_count 6196
-%global commit_date Sun Jun 15 23:42:58 2025
+#%%global bumpver 1
+%global commits_count 6098
+%global commit_date Thu May 08 08:15:18 2025
 
 %global protocols_commit 3a5c2bda1c1a4e55cc1330c782547695a93f05b2
 %global protocols_shortcommit %(c=%{protocols_commit}; echo ${c:0:7})
@@ -10,7 +10,9 @@
 %global udis86_commit 5336633af70f3917760a6d441ff02d93477b0c86
 %global udis86_shortcommit %(c=%{udis86_commit}; echo ${c:0:7})
 
-Name:           hyprland-git
+%bcond legacyrenderer 0
+
+Name:           hyprland
 Version:        0.49.0%{?bumpver:^%{bumpver}.git%{hyprland_shortcommit}}
 Release:        %autorelease
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
@@ -103,7 +105,6 @@ Provides:       bundled(udis86) = 1.7.2^1.%{udis86_shortcommit}
 
 Requires:       xorg-x11-server-Xwayland%{?_isa}
 Requires:       hyprcursor%{?_isa} >= 0.1.9
-Requires:       hyprgraphics%{?_isa} >= 0.1.3
 
 %{lua:do
 if string.match(rpm.expand('%{name}'), '%-git$') then
@@ -117,7 +118,6 @@ elseif not string.match(rpm.expand('%{name}'), 'hyprland$') then
 else
     print('Obsoletes: hyprland-nvidia < 1:0.32.3-2'..'\n')
     print(rpm.expand('Provides: hyprland-nvidia = %{version}-%{release}')..'\n')
-    print('Obsoletes: hyprland-legacyrenderer < 0.49.0'..'\n')
 end
 end}
 
@@ -195,7 +195,11 @@ sed -i \
 %build
 %cmake \
     -GNinja \
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=Release \
+%if %{with legacyrenderer}
+    -DLEGACY_RENDERER:BOOL=ON \
+%endif
+%{nil}
 %cmake_build
 
 
