@@ -1,6 +1,6 @@
-%global commit0 1f332c09a2382cb23da0f69a6f504f8b33433831
+%global commit0 4783860953a0777fee43d45fee0df9173f9e8c9e
 %global shortcommit0 %(c=%{commit0}; echo ${c:0:7})
-%global bumpver 1020
+%global bumpver 1152
 
 %global __provides_exclude_from ^(%{_libdir}/hyprland/.*\\.so)$
 
@@ -9,6 +9,7 @@
                 csgo-vulkan-fix
                 hyprbars
                 hyprexpo
+                hyprscrolling
                 hyprtrails
                 hyprwinwrap
                 xtra-dispatchers
@@ -31,7 +32,7 @@ end
 
 Name:           %{pluginsmetaname}
 Version:        0.1^%{bumpver}.git%{shortcommit0}
-Release:        %autorelease -b3
+Release:        %autorelease
 Summary:        Official plugins for Hyprland
 
 License:        BSD-3-Clause
